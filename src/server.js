@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 
 const driver =
     require("./config/neo4j");
@@ -15,17 +16,26 @@ app.use(
     express.json()
 );
 
-
-app.get(
-    "/",
-    (req, res) => {
-
-        res.json({
-            message:
-                "GraphCodeRAG API is running"
-        });
+// Enable CORS for frontend running on Live Server or other ports
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    if (req.method === "OPTIONS") {
+        return res.sendStatus(200);
     }
+    next();
+});
+
+app.use(
+    express.static(
+        path.join(__dirname, "../public")
+    )
 );
+
+app.use("/api/rag", ragRoutes);
+app.use("/api", ragRoutes);
+app.use("/", ragRoutes);
 
 
 app.get(

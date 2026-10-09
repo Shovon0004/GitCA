@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraphCodeRAG - Codebase Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .prose pre { background-color: #1e293b; color: #f8fafc; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }
+        .prose code { color: #38bdf8; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex items-center justify-between pb-6 mb-8 border-b border-slate-800">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-diagram-project"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white">GraphCodeRAG</h1>
+                    <p class="text-xs text-slate-400">Knowledge Graph + Vector Hybrid Code Retrieval</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-950 text-emerald-400 border border-emerald-800">
+                    <span class="w-1.5 h-1.5 mr-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+                    Neo4j + Groq Active
+                </span>
+            </div>
+        </header>
+
+        <!-- Grid Layout -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Left Column: Ingestion Panel -->
+            <div class="md:col-span-1 space-y-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
+                        <i class="fa-brands fa-github text-indigo-400"></i>
+                        1. Ingest Repository
+                    </h2>
+                    <form id="ingestForm" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">GitHub URL or Owner/Repo</label>
+                            <input 
+                                type="text" 
+                                id="repoUrl" 
+                                placeholder="https://github.com/facebook/react" 
+                                class="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white placeholder-slate-500"
+                                required
+                            />
+                        </div>
+                        <button 
+                            type="submit" 
+                            id="ingestBtn" 
+                            class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 font-medium text-sm text-white rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20"
+                        >
+                            <i class="fa-solid fa-cloud-arrow-down"></i>
+                            <span>Ingest & Index</span>
+                        </button>
+                    </form>
+
+                    <!-- Ingestion Status Box -->
+                    <div id="ingestStatus" class="mt-4 hidden p-3 rounded-xl text-xs space-y-2"></div>
+                </div>
+
+                <!-- Active Repo Card -->
+                <div id="activeRepoCard" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl hidden">
+                    <h3 class="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-3">Active Knowledge Context</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Owner:</span>
+                            <span id="activeOwner" class="font-mono text-indigo-300">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Repo:</span>
+                            <span id="activeRepo" class="font-mono text-indigo-300">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Indexed Files:</span>
+                            <span id="activeFiles" class="font-mono text-slate-200">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Commits:</span>
+                            <span id="activeCommits" class="font-mono text-slate-200">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Question & Answer Workspace -->
+            <div class="md:col-span-2 space-y-6">
+                <!-- Question Box -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
+                        <i class="fa-solid fa-circle-question text-indigo-400"></i>
+                        2. Ask Questions
+                    </h2>
+                    <form id="askForm" class="space-y-4">
+                        <div>
+                            <input 
+                                type="text" 
+                                id="questionInput" 
+                                placeholder="e.g. Where is authentication implemented and which functions are called?" 
+                                class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white placeholder-slate-500"
+                                required
+                            />
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex flex-wrap gap-2 text-xs">
+                                <span class="text-slate-400">Try:</span>
+                                <button type="button" class="sample-q text-indigo-400 hover:underline">Where is authentication implemented?</button>
+                                <button type="button" class="sample-q text-indigo-400 hover:underline">What functions are called by login?</button>
+                            </div>
+                            <button 
+                                type="submit" 
+                                id="askBtn" 
+                                class="py-2.5 px-6 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 font-medium text-sm text-white rounded-xl transition flex items-center gap-2 shadow-lg shadow-emerald-600/20"
+                            >
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>Ask RAG</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Answer Container -->
+                <div id="answerSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl hidden">
+                    <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-800">
+                        <h3 class="text-md font-semibold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-robot text-emerald-400"></i>
+                            AI Answer
+                        </h3>
+                        <div class="flex space-x-2" id="contextTabs">
+                            <button id="tabAnswer" class="px-3 py-1 bg-slate-800 text-white rounded-lg text-xs font-medium">Answer</button>
+                            <button id="tabGraph" class="px-3 py-1 bg-slate-950 text-slate-400 hover:text-white rounded-lg text-xs font-medium">Graph (<span id="graphCount">0</span>)</button>
+                            <button id="tabVector" class="px-3 py-1 bg-slate-950 text-slate-400 hover:text-white rounded-lg text-xs font-medium">Vector (<span id="vectorCount">0</span>)</button>
+                        </div>
+                    </div>
+
+                    <!-- Tab 1: Answer Content -->
+                    <div id="answerContent" class="prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed"></div>
+
+                    <!-- Tab 2: Graph Context -->
+                    <div id="graphContent" class="hidden">
+                        <pre id="graphJson" class="bg-slate-950 p-4 rounded-xl text-xs text-indigo-300 overflow-x-auto max-h-96 font-mono"></pre>
+                    </div>
+
+                    <!-- Tab 3: Vector Context -->
+                    <div id="vectorContent" class="hidden">
+                        <pre id="vectorJson" class="bg-slate-950 p-4 rounded-xl text-xs text-emerald-300 overflow-x-auto max-h-96 font-mono"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentOwner = "facebook";
+        let currentRepo = "react";
+
+        // If opened via Live Server (e.g. port 5500) or file://, direct requests to backend port 5000
+        const API_BASE = (window.location.protocol === "file:" || !window.location.origin.includes(":5000"))
+            ? "http://localhost:5000"
+            : "";
+
+        const repoUrlInput = document.getElementById("repoUrl");
+        const ingestForm = document.getElementById("ingestForm");
+        const ingestBtn = document.getElementById("ingestBtn");
+        const ingestStatus = document.getElementById("ingestStatus");
+
+        const activeRepoCard = document.getElementById("activeRepoCard");
+        const activeOwner = document.getElementById("activeOwner");
+        const activeRepo = document.getElementById("activeRepo");
+        const activeFiles = document.getElementById("activeFiles");
+        const activeCommits = document.getElementById("activeCommits");
+
+        const askForm = document.getElementById("askForm");
+        const questionInput = document.getElementById("questionInput");
+        const askBtn = document.getElementById("askBtn");
+        const answerSection = document.getElementById("answerSection");
+        const answerContent = document.getElementById("answerContent");
+        const graphJson = document.getElementById("graphJson");
+        const vectorJson = document.getElementById("vectorJson");
+        const graphCount = document.getElementById("graphCount");
+        const vectorCount = document.getElementById("vectorCount");
+
+        // Ingestion Handler
+        ingestForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const url = repoUrlInput.value.trim();
+            if (!url) return;
+
+            ingestBtn.disabled = true;
+            ingestBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Ingesting...`;
+            ingestStatus.className = "mt-4 p-3 rounded-xl text-xs bg-indigo-950 text-indigo-300 border border-indigo-800 block";
+            ingestStatus.innerHTML = `Cloning repository and indexing AST code entities, graph relations, and vector embeddings... This may take a moment.`;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/rag/ingest`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ url })
+                });
+
+                const rawText = await res.text();
+                let data;
+                try {
+                    data = JSON.parse(rawText);
+                } catch (e) {
+                    throw new Error(rawText || `Server error (HTTP ${res.status}: ${res.statusText})`);
+                }
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || "Ingestion failed");
+                }
+
+                currentOwner = data.owner;
+                currentRepo = data.repo;
+
+                activeOwner.textContent = data.owner;
+                activeRepo.textContent = data.repo;
+                activeFiles.textContent = data.graphStats?.filesFound || data.vectorStats?.indexedFiles || 0;
+                activeCommits.textContent = data.graphStats?.commitsFound || 0;
+                activeRepoCard.classList.remove("hidden");
+
+                ingestStatus.className = "mt-4 p-3 rounded-xl text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 block";
+                ingestStatus.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Successfully ingested <strong>${data.owner}/${data.repo}</strong> (${data.graphStats?.filesFound || 0} files, ${data.graphStats?.commitsFound || 0} commits). You can now ask questions!`;
+            } catch (err) {
+                ingestStatus.className = "mt-4 p-3 rounded-xl text-xs bg-rose-950 text-rose-300 border border-rose-800 block";
+                ingestStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> ${err.message}`;
+            } finally {
+                ingestBtn.disabled = false;
+                ingestBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-down"></i> <span>Ingest & Index</span>`;
+            }
+        });
+
+        // Question Handler
+        askForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const question = questionInput.value.trim();
+            if (!question) return;
+
+            askBtn.disabled = true;
+            askBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Searching...`;
+            answerSection.classList.remove("hidden");
+            answerContent.innerHTML = `<div class="flex items-center gap-2 text-slate-400 py-4"><i class="fa-solid fa-circle-notch fa-spin text-emerald-400"></i> Querying Neo4j knowledge graph & vector store, reasoning with LLM...</div>`;
+
+            try {
+                const url = repoUrlInput.value.trim();
+                const payload = url 
+                    ? { url, question }
+                    : { owner: currentOwner, repo: currentRepo, question };
+
+                const res = await fetch(`${API_BASE}/api/rag/ask`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const rawText = await res.text();
+                let data;
+                try {
+                    data = JSON.parse(rawText);
+                } catch (e) {
+                    throw new Error(rawText || `Server error (HTTP ${res.status}: ${res.statusText})`);
+                }
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || "RAG query failed");
+                }
+
+                answerContent.innerHTML = marked.parse(data.answer || "No answer returned.");
+                graphJson.textContent = JSON.stringify(data.context?.graph || [], null, 2);
+                vectorJson.textContent = JSON.stringify(data.context?.vector || [], null, 2);
+                graphCount.textContent = (data.context?.graph || []).length;
+                vectorCount.textContent = (data.context?.vector || []).length;
+            } catch (err) {
+                answerContent.innerHTML = `<div class="text-rose-400 p-3 bg-rose-950 rounded-xl border border-rose-800">${err.message}</div>`;
+            } finally {
+                askBtn.disabled = false;
+                askBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Ask RAG</span>`;
+            }
+        });
+
+        // Sample Questions
+        document.querySelectorAll(".sample-q").forEach(btn => {
+            btn.addEventListener("click", () => {
+                questionInput.value = btn.textContent;
+                askForm.dispatchEvent(new Event("submit"));
+            });
+        });
+
+        // Tabs
+        const tabAnswer = document.getElementById("tabAnswer");
+        const tabGraph = document.getElementById("tabGraph");
+        const tabVector = document.getElementById("tabVector");
+
+        function setTab(active) {
+            [tabAnswer, tabGraph, tabVector].forEach(t => {
+                t.className = "px-3 py-1 bg-slate-950 text-slate-400 hover:text-white rounded-lg text-xs font-medium";
+            });
+            active.className = "px-3 py-1 bg-slate-800 text-white rounded-lg text-xs font-medium";
+            answerContent.classList.toggle("hidden", active !== tabAnswer);
+            document.getElementById("graphContent").classList.toggle("hidden", active !== tabGraph);
+            document.getElementById("vectorContent").classList.toggle("hidden", active !== tabVector);
+        }
+
+        tabAnswer.onclick = () => setTab(tabAnswer);
+        tabGraph.onclick = () => setTab(tabGraph);
+        tabVector.onclick = () => setTab(tabVector);
+    </script>
+</body>
+</html>
+

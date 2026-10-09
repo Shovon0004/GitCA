@@ -11,12 +11,23 @@ const {
 
 
 async function indexRepository(
+    ownerOrPath,
+    repo,
     repositoryPath
 ) {
+    let owner = null;
+    let actualRepo = null;
+    let targetPath = ownerOrPath;
+
+    if (repositoryPath !== undefined) {
+        owner = ownerOrPath;
+        actualRepo = repo;
+        targetPath = repositoryPath;
+    }
 
     const files =
         scanDirectory(
-            repositoryPath
+            targetPath
         );
 
 
@@ -34,7 +45,7 @@ async function indexRepository(
 
         const relativePath =
             path.relative(
-                repositoryPath,
+                targetPath,
                 file
             );
 
@@ -46,7 +57,8 @@ async function indexRepository(
 
 
         await addDocument({
-
+            owner,
+            repo: actualRepo,
             file:
                 relativePath,
 
@@ -59,6 +71,10 @@ async function indexRepository(
     console.log(
         `Indexed ${files.length} files.`
     );
+
+    return {
+        indexedFiles: files.length
+    };
 }
 
 

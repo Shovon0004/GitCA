@@ -14,11 +14,12 @@ async function createFunction(
     startLine,
     endLine
 ) {
+    if (!functionName) return null;
 
     const result =
         await driver.executeQuery(
             `
-            MATCH (f:File {
+            MERGE (f:File {
                 owner: $owner,
                 repository: $repo,
                 path: $path
@@ -52,6 +53,10 @@ async function createFunction(
         );
 
 
+    if (result.records.length === 0) {
+        return null;
+    }
+
     return result.records[0]
         .get("fn")
         .properties;
@@ -68,11 +73,12 @@ async function createClass(
     filePath,
     className
 ) {
+    if (!className) return null;
 
     const result =
         await driver.executeQuery(
             `
-            MATCH (f:File {
+            MERGE (f:File {
                 owner: $owner,
                 repository: $repo,
                 path: $path
@@ -98,6 +104,10 @@ async function createClass(
         );
 
 
+    if (result.records.length === 0) {
+        return null;
+    }
+
     return result.records[0]
         .get("c")
         .properties;
@@ -114,17 +124,18 @@ async function createImport(
     sourcePath,
     targetPath
 ) {
+    if (!sourcePath || !targetPath) return null;
 
     const result =
         await driver.executeQuery(
             `
-            MATCH (source:File {
+            MERGE (source:File {
                 owner: $owner,
                 repository: $repo,
                 path: $sourcePath
             })
 
-            MATCH (target:File {
+            MERGE (target:File {
                 owner: $owner,
                 repository: $repo,
                 path: $targetPath
@@ -143,7 +154,7 @@ async function createImport(
         );
 
 
-    return result.records[0];
+    return result.records[0] || null;
 }
 
 
@@ -158,6 +169,7 @@ async function createCall(
     callerName,
     calleeName
 ) {
+    if (!callerName || !calleeName) return [];
 
     /*
      Example:

@@ -1,6 +1,10 @@
 const {
     searchFunctions,
-    getFileGraphContext
+    getFileGraphContext,
+    getContributors,
+    getMostChangedFiles,
+    getRecentCommits,
+    getRepoOverview
 } = require("./graphRetriever");
 
 const {
@@ -20,17 +24,11 @@ function extractKeywords(question) {
             .split(/\s+/)
             .filter(
                 word =>
-                    word.length > 3
+                    word.length > 2
             );
 
 
     const keywordMap = {
-
-        authentication: [
-            "authenticate",
-            "auth",
-            "login"
-        ],
 
         authentication: [
             "authenticate",
@@ -50,17 +48,34 @@ function extractKeywords(question) {
             "login"
         ],
 
-        function: [
-            "function"
+        contributor: [
+            "commit",
+            "author"
         ],
 
-        functions: [
-            "function"
+        contributors: [
+            "commit",
+            "author"
         ],
 
-        implementation: [
-            "authenticate",
-            "login"
+        contribuiters: [
+            "commit",
+            "author"
+        ],
+
+        author: [
+            "commit",
+            "author"
+        ],
+
+        change: [
+            "commit",
+            "modifies"
+        ],
+
+        changes: [
+            "commit",
+            "modifies"
         ]
     };
 
@@ -94,13 +109,26 @@ async function hybridSearch(
 ) {
 
     // --------------------------------
+    // REPOSITORY & GIT ANALYTICS
+    // --------------------------------
+    const [overview, contributors, mostChangedFiles, recentCommits] = await Promise.all([
+        getRepoOverview(owner, repo).catch(() => null),
+        getContributors(owner, repo).catch(() => []),
+        getMostChangedFiles(owner, repo, 10).catch(() => []),
+        getRecentCommits(owner, repo, 10).catch(() => [])
+    ]);
+
+
+    // --------------------------------
     // VECTOR SEARCH
     // --------------------------------
 
     const vectorResults =
         await searchSimilar(
             question,
-            5
+            5,
+            owner,
+            repo
         );
 
 
@@ -202,6 +230,14 @@ async function hybridSearch(
 
 
     return {
+
+        repository: overview,
+
+        git: {
+            contributors,
+            mostChangedFiles,
+            recentCommits
+        },
 
         graph:
             graphResults.slice(

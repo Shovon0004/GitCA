@@ -31,21 +31,40 @@ async function addDocument(
             VECTOR_FILE
         )
     ) {
-
-        documents =
-            JSON.parse(
-                fs.readFileSync(
-                    VECTOR_FILE,
-                    "utf8"
-                )
-            );
+        try {
+            documents =
+                JSON.parse(
+                    fs.readFileSync(
+                        VECTOR_FILE,
+                        "utf8"
+                    )
+                );
+        } catch (e) {
+            documents = [];
+        }
     }
 
 
-    documents.push({
-        ...document,
-        embedding
-    });
+    const existingIndex =
+        documents.findIndex(
+            d =>
+                d.owner === document.owner &&
+                d.repo === document.repo &&
+                d.file === document.file
+        );
+
+
+    if (existingIndex >= 0) {
+        documents[existingIndex] = {
+            ...document,
+            embedding
+        };
+    } else {
+        documents.push({
+            ...document,
+            embedding
+        });
+    }
 
 
     fs.writeFileSync(
@@ -98,7 +117,9 @@ function cosineSimilarity(
 
 async function searchSimilar(
     query,
-    limit = 5
+    limit = 5,
+    owner = null,
+    repo = null
 ) {
 
     if (
@@ -111,13 +132,23 @@ async function searchSimilar(
     }
 
 
-    const documents =
+    let documents =
         JSON.parse(
             fs.readFileSync(
                 VECTOR_FILE,
                 "utf8"
             )
         );
+
+
+    if (owner && repo) {
+        const repoDocs = documents.filter(
+            d => d.owner === owner && d.repo === repo
+        );
+        if (repoDocs.length > 0) {
+            documents = repoDocs;
+        }
+    }
 
 
     const queryEmbedding =
