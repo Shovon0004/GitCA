@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "question": "Where is authentication implemented?",
+    "graph": {
+      "correctness": 0,
+      "latencyMs": 1124
+    },
+    "vector": {
+      "correctness": 1,
+      "latencyMs": 682
+    },
+    "hybrid": {
+      "correctness": 1,
+      "latencyMs": 1148
+    }
+  },
+  {
+    "id": 2,
+    "question": "Which function handles login?",
+    "graph": {
+      "correctness": 0.5,
+      "latencyMs": 643
+    },
+    "vector": {
+      "correctness": 1,
+      "latencyMs": 892
+    },
+    "hybrid": {
+      "correctness": 1,
+      "latencyMs": 1326
+    }
+  },
+  {
+    "id": 3,
+    "question": "Which files are imported by authController.js?",
+    "graph": {
+      "correctness": 0,
+      "latencyMs": 876
+    },
+    "vector": {
+      "correctness": 1,
+      "latencyMs": 949
+    },
+    "hybrid": {
+      "correctness": 1,
+      "latencyMs": 939
+    }
+  },
+  {
+    "id": 4,
+    "question": "What functions are involved in authentication?",
+    "graph": {
+      "correctness": 0,
+      "latencyMs": 558
+    },
+    "vector": {
+      "correctness": 1,
+      "latencyMs": 982
+    },
+    "hybrid": {
+      "correctness": 1,
+      "latencyMs": 1059
+    }
+  },
+  {
+    "id": 5,
+    "question": "What could be affected if authenticate() changes?",
+    "graph": {
+      "correctness": 0,
+      "latencyMs": 888
+    },
+    "vector": {
+      "correctness": 1,
+      "latencyMs": 794
+    },
+    "hybrid": {
+      "correctness": 1,
+      "latencyMs": 1846
+    }
+  }
+]

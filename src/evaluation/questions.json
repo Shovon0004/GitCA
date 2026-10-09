@@ -1,0 +1,41 @@
+[
+    {
+        "id": 1,
+        "question": "Where is authentication implemented?",
+        "expected": [
+            "authService.js",
+            "authenticate"
+        ]
+    },
+    {
+        "id": 2,
+        "question": "Which function handles login?",
+        "expected": [
+            "authController.js",
+            "login"
+        ]
+    },
+    {
+        "id": 3,
+        "question": "Which files are imported by authController.js?",
+        "expected": [
+            "authService.js"
+        ]
+    },
+    {
+        "id": 4,
+        "question": "What functions are involved in authentication?",
+        "expected": [
+            "login",
+            "authenticate"
+        ]
+    },
+    {
+        "id": 5,
+        "question": "What could be affected if authenticate() changes?",
+        "expected": [
+            "login",
+            "authController.js"
+        ]
+    }
+]
