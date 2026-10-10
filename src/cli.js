@@ -15,7 +15,7 @@ function prompt(question) {
 
 async function main() {
     console.log("\n========================================================");
-    console.log("🚀 GraphCodeRAG - GitHub Ingestion & Question Assistant");
+    console.log("🚀 GitCA - GitHub Ingestion & Question Assistant");
     console.log("========================================================\n");
 
     const repoInput = await prompt("Paste GitHub URL or owner/repo (e.g. https://github.com/facebook/react): ");
